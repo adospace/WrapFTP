@@ -1,5 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <Version Condition=" '$(APPVEYOR_BUILD_VERSION)' == '' ">0.0.1-local</Version>
+    <Version Condition=" '$(APPVEYOR_BUILD_VERSION)' != '' ">$(APPVEYOR_BUILD_VERSION)</Version>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>adospace</Authors>
+    <Description>CoreFTP is a .NET standard library that provides a convenient wrapper around FtpWebRequest class with useful methods to download/upload/list files from a FTP server.</Description>
+    <Copyright>Adolfo Marinucci</Copyright>
+    <PackageProjectUrl>https://github.com/adospace/CoreFTP</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/adospace/CoreFTP/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/adospace/CoreFTP</RepositoryUrl>
+    <PackageTags>.net core standard ftp client</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
