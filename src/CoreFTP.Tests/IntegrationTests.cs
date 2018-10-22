@@ -20,7 +20,6 @@ namespace CoreFTP.Tests
             #region Setup of test ftp server
             foreach (var process in Process.GetProcessesByName("ftpdmin"))
             {
-                System.Diagnostics.Debug.WriteLine("Deleted process");
                 process.Kill();
                 System.Threading.Thread.Sleep(1000);
             }
@@ -81,9 +80,18 @@ namespace CoreFTP.Tests
             Assert.AreEqual(2, remoteFilesAfterDirectoryMake.Length);
             Assert.IsNotNull(remoteFilesAfterDirectoryMake.FirstOrDefault(_ => _ == "remoteDir"));
 
+            //ftpadmin doesn't support newest ftp commands
             //var lastModifiedTimestamp = await ftpClient.GetLastModifiedTimestamp("remoteFileRenamed.txt");
 
             //Assert.IsTrue(lastModifiedTimestamp != default(DateTime));
+
+            #region Shutdown test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+            #endregion
         }
     }
 }
