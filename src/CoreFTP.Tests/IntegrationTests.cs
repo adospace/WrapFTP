@@ -12,7 +12,7 @@ namespace CoreFTP.Tests
     public class IntegrationTests
     {
         [TestMethod]
-        public async Task UploadFile()
+        public async Task Complete()
         {
             var ftpFolder = Path.Combine(Path.GetTempPath(), "coreftp_test");
             var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
@@ -84,6 +84,11 @@ namespace CoreFTP.Tests
             //var lastModifiedTimestamp = await ftpClient.GetLastModifiedTimestamp("remoteFileRenamed.txt");
 
             //Assert.IsTrue(lastModifiedTimestamp != default(DateTime));
+
+            //nor SIZE command...
+            //var fileSize = await ftpClient.GetFileSize("remoteFileRenamed.txt");
+
+            //Assert.AreEqual(new FileInfo(tempFileToUpload).Length, fileSize);
 
             #region Shutdown test ftp server
             foreach (var process in Process.GetProcessesByName("ftpdmin"))

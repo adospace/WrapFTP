@@ -24,17 +24,22 @@ namespace CoreFTP
             Password = password;
         }
 
+        private FtpWebRequest GetFtpWebRequest(string remotePath)
+        {
+            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remotePath}");
+            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
+            return request;
+        }
+
         public async Task Upload(string localFileName, string remoteFileName = null)
         {
             Validate.NotNullOrEmptyOrWhiteSpace(localFileName, nameof(localFileName));
 
             remoteFileName = remoteFileName ?? Path.GetFileName(localFileName);
 
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteFileName}");
+            var request = GetFtpWebRequest(remoteFileName);
+
             request.Method = WebRequestMethods.Ftp.UploadFile;
-
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
-
             request.ContentLength = new FileInfo(localFileName).Length;
 
             using (var requestStream = await request.GetRequestStreamAsync())
@@ -54,10 +59,7 @@ namespace CoreFTP
             if (Path.IsPathRooted(remoteFileName))
                 throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
 
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteFileName}");
-            request.Method = WebRequestMethods.Ftp.DownloadFile;
-
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
+            var request = GetFtpWebRequest(remoteFileName);
 
             using (var response = ((FtpWebResponse)await request.GetResponseAsync()))
             {
@@ -67,12 +69,11 @@ namespace CoreFTP
             }
         }
 
-        public async Task<string[]> ListDirectory(string remoteFolder = null)
+        public async Task<string[]> ListDirectory(string remoteDirectory = null)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteFolder}");
-            request.Method = WebRequestMethods.Ftp.ListDirectory;
+            var request = GetFtpWebRequest(remoteDirectory);
 
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
+            request.Method = WebRequestMethods.Ftp.ListDirectory;
 
             using (var response = ((FtpWebResponse)await request.GetResponseAsync()))
             {
@@ -87,10 +88,9 @@ namespace CoreFTP
 
         public async Task<string[]> ListDirectoryDetails(string remoteDirectory = null)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteDirectory}");
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+            var request = GetFtpWebRequest(remoteDirectory);
 
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
+            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
 
             using (var response = ((FtpWebResponse)await request.GetResponseAsync()))
             {
@@ -105,10 +105,10 @@ namespace CoreFTP
 
         public async Task Rename(string oldRemoteFileName, string newRemoteFileName)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{oldRemoteFileName}");
+            var request = GetFtpWebRequest(oldRemoteFileName);
+
             request.Method = WebRequestMethods.Ftp.Rename;
             request.RenameTo = newRemoteFileName;
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
 
             using (await request.GetResponseAsync()) { }
         }
@@ -116,27 +116,25 @@ namespace CoreFTP
 
         public async Task MakeDirectory(string remoteDirectoryName)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteDirectoryName}");
+            var request = GetFtpWebRequest(remoteDirectoryName);
+
             request.Method = WebRequestMethods.Ftp.MakeDirectory;
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
 
             using (await request.GetResponseAsync()) { }
         }
 
         public async Task Delete(string remoteFileName)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteFileName}");
+            var request = GetFtpWebRequest(remoteFileName);
             request.Method = WebRequestMethods.Ftp.Rename;
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
 
             using (await request.GetResponseAsync()) { }
         }
 
         public async Task<DateTime> GetLastModifiedTimestamp(string remoteFileName)
         {
-            var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remoteFileName}");
+            var request = GetFtpWebRequest(remoteFileName);
             request.Method = WebRequestMethods.Ftp.GetDateTimestamp;
-            request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
 
             using (var response = await request.GetResponseAsync())
             {
@@ -146,6 +144,25 @@ namespace CoreFTP
                     var responseContent = await streamReader.ReadToEndAsync();
                     if (long.TryParse(responseContent, out var fileTime))
                         return DateTime.FromFileTimeUtc(fileTime);
+
+                    throw new FtpReplyException("Unable to understand reply from server");
+                }
+            }
+        }
+
+        public async Task<long> GetFileSize(string remoteFileName)
+        {
+            var request = GetFtpWebRequest(remoteFileName);
+            request.Method = WebRequestMethods.Ftp.GetFileSize;
+
+            using (var response = await request.GetResponseAsync())
+            {
+                using (var responseStream = response.GetResponseStream())
+                using (var streamReader = new StreamReader(responseStream))
+                {
+                    var responseContent = await streamReader.ReadToEndAsync();
+                    if (long.TryParse(responseContent, out var fileSize))
+                        return fileSize;
 
                     throw new FtpReplyException("Unable to understand reply from server");
                 }
