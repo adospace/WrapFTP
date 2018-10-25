@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace CoreFTP.Tests
+namespace WrapFTP.Tests
 {
     [TestClass]
     public class IntegrationTests
@@ -14,7 +14,7 @@ namespace CoreFTP.Tests
         [TestMethod]
         public async Task Complete()
         {
-            var ftpFolder = Path.Combine(Path.GetTempPath(), "coreftp_test");
+            var ftpFolder = Path.Combine(Path.GetTempPath(), "WrapFTP_test");
             var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
             
             #region Setup of test ftp server
@@ -31,7 +31,7 @@ namespace CoreFTP.Tests
             Directory.CreateDirectory(ftpUploadsFolder);
 
             using (var fs = new FileStream(Path.Combine(ftpFolder, "ftpdmin.exe"), FileMode.Create))
-                await Assembly.GetExecutingAssembly().GetManifestResourceStream("CoreFTP.Tests.TestServer.ftpdmin.exe")
+                await Assembly.GetExecutingAssembly().GetManifestResourceStream("WrapFTP.Tests.TestServer.ftpdmin.exe")
                     .CopyToAsync(fs);
 
 

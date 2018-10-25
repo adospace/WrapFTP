@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace CoreFTP
+namespace WrapFTP
 {
     [Serializable]
     internal class FtpReplyException : Exception

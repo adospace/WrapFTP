@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoreFTP
+namespace WrapFTP
 {
     internal class Validate
     {

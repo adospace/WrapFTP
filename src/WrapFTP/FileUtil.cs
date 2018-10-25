@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CoreFTP
+namespace WrapFTP
 {
     internal static class FileUtil
     {
