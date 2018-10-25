@@ -51,6 +51,44 @@ namespace WrapFTP
             using (await request.GetResponseAsync()) { }
         }
 
+        public async Task Upload(Stream stream, string remoteFileName)
+        {
+            Validate.NotNull(stream, nameof(stream));
+            Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));
+
+            var request = GetFtpWebRequest(remoteFileName);
+
+            request.Method = WebRequestMethods.Ftp.UploadFile;
+            request.ContentLength = stream.Length;
+
+            using (var requestStream = await request.GetRequestStreamAsync())
+            {
+                await stream.CopyToAsync(requestStream);
+            }
+
+            using (await request.GetResponseAsync()) { }
+        }
+
+        public async Task Upload(byte[] buffer, string remoteFileName)
+        {
+            Validate.NotNull(buffer, nameof(buffer));
+            Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));
+
+            var request = GetFtpWebRequest(remoteFileName);
+
+            request.Method = WebRequestMethods.Ftp.UploadFile;
+            request.ContentLength = buffer.Length;
+
+            using (var requestStream = await request.GetRequestStreamAsync())
+            {
+                await requestStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+
+            using (await request.GetResponseAsync()) { }
+        }
+
+
+
         public async Task Download(string remoteFileName, string localFileName)
         {
             Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));

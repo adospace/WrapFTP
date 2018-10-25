@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace WrapFTP.Tests
@@ -98,5 +99,114 @@ namespace WrapFTP.Tests
             }
             #endregion
         }
+
+        [TestMethod]
+        public async Task UploadBinary()
+        {
+            var ftpFolder = Path.Combine(Path.GetTempPath(), "WrapFTP_test");
+            var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
+
+            #region Setup of test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+
+
+            Directory.CreateDirectory(ftpFolder);
+            if (Directory.Exists(ftpUploadsFolder))
+                Directory.Delete(ftpUploadsFolder, true);
+            Directory.CreateDirectory(ftpUploadsFolder);
+
+            using (var fs = new FileStream(Path.Combine(ftpFolder, "ftpdmin.exe"), FileMode.Create))
+                await Assembly.GetExecutingAssembly().GetManifestResourceStream("WrapFTP.Tests.TestServer.ftpdmin.exe")
+                    .CopyToAsync(fs);
+
+
+            var ftpServerProcess = Process.Start(new ProcessStartInfo()
+            {
+                FileName = Path.Combine(ftpFolder, "ftpdmin.exe"),
+                Arguments = $"-ha 127.0.0.1 \"{ftpUploadsFolder}\"",
+                WorkingDirectory = ftpFolder
+            });
+            #endregion
+
+            var ftpClient = new FtpClient("localhost");
+
+
+            await ftpClient.Upload(Encoding.UTF8.GetBytes("sample content"), "test_file.txt");
+
+            var filesInUploadsFolder = Directory.GetFiles(ftpUploadsFolder);
+
+            Assert.AreEqual(1, filesInUploadsFolder.Length);
+
+            var uploadFileContent = await File.ReadAllTextAsync(filesInUploadsFolder[0]);
+
+            Assert.AreEqual("sample content", uploadFileContent);
+
+            #region Shutdown test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+            #endregion
+        }
+
+        [TestMethod]
+        public async Task UploadStream()
+        {
+            var ftpFolder = Path.Combine(Path.GetTempPath(), "WrapFTP_test");
+            var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
+
+            #region Setup of test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+
+
+            Directory.CreateDirectory(ftpFolder);
+            if (Directory.Exists(ftpUploadsFolder))
+                Directory.Delete(ftpUploadsFolder, true);
+            Directory.CreateDirectory(ftpUploadsFolder);
+
+            using (var fs = new FileStream(Path.Combine(ftpFolder, "ftpdmin.exe"), FileMode.Create))
+                await Assembly.GetExecutingAssembly().GetManifestResourceStream("WrapFTP.Tests.TestServer.ftpdmin.exe")
+                    .CopyToAsync(fs);
+
+
+            var ftpServerProcess = Process.Start(new ProcessStartInfo()
+            {
+                FileName = Path.Combine(ftpFolder, "ftpdmin.exe"),
+                Arguments = $"-ha 127.0.0.1 \"{ftpUploadsFolder}\"",
+                WorkingDirectory = ftpFolder
+            });
+            #endregion
+
+            var ftpClient = new FtpClient("localhost");
+
+            await ftpClient.Upload(new MemoryStream(Encoding.UTF8.GetBytes("sample content")), "test_file.txt");
+            await ftpClient.Upload(new MemoryStream(Encoding.UTF8.GetBytes("sample content edited")), "test_file.txt");
+
+            var filesInUploadsFolder = Directory.GetFiles(ftpUploadsFolder);
+
+            Assert.AreEqual(1, filesInUploadsFolder.Length);
+
+            var uploadFileContent = await File.ReadAllTextAsync(filesInUploadsFolder[0]);
+
+            Assert.AreEqual("sample content edited", uploadFileContent);
+
+            #region Shutdown test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+            #endregion
+        }
+
     }
 }
