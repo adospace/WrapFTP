@@ -23,6 +23,7 @@ namespace WrapFTP
             Port = port;
             Username = username;
             Password = password;
+            Timeout = timoeut;
         }
 
         private FtpWebRequest GetFtpWebRequest(string remotePath)
