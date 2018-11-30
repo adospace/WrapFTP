@@ -14,7 +14,7 @@ namespace WrapFTP
         private string Password { get; }
         public int Timeout { get; }
 
-        public FtpClient(string host, int port = 21, string username = null, string password = null, int timoeut = -1)
+        public FtpClient(string host, int port = 21, string username = null, string password = null, int timeout = -1)
         {
             Validate.NotNullOrEmptyOrWhiteSpace(host, nameof(host));
             Validate.Positive(port, nameof(port));
@@ -23,7 +23,7 @@ namespace WrapFTP
             Port = port;
             Username = username;
             Password = password;
-            Timeout = timoeut;
+            Timeout = timeout;
         }
 
         private FtpWebRequest GetFtpWebRequest(string remotePath)
@@ -31,6 +31,9 @@ namespace WrapFTP
             var request = (FtpWebRequest)WebRequest.Create($"ftp://{Host}:{Port}/{remotePath}");
             request.Credentials = new NetworkCredential(Username ?? "anonymous", Password);
             request.Timeout = Timeout;
+            request.ReadWriteTimeout = Timeout;
+            request.KeepAlive = false;
+            request.ServicePoint.ConnectionLimit = 1000;
             return request;
         }
 
