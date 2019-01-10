@@ -208,5 +208,51 @@ namespace WrapFTP.Tests
             #endregion
         }
 
+        [TestMethod]
+        public async Task DownloadStream()
+        {
+            var ftpFolder = Path.Combine(Path.GetTempPath(), "WrapFTP_test");
+            var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
+
+            #region Setup of test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+
+
+            Directory.CreateDirectory(ftpFolder);
+            if (Directory.Exists(ftpUploadsFolder))
+                Directory.Delete(ftpUploadsFolder, true);
+            Directory.CreateDirectory(ftpUploadsFolder);
+
+            using (var fs = new FileStream(Path.Combine(ftpFolder, "ftpdmin.exe"), FileMode.Create))
+                await Assembly.GetExecutingAssembly().GetManifestResourceStream("WrapFTP.Tests.TestServer.ftpdmin.exe")
+                    .CopyToAsync(fs);
+
+
+            var ftpServerProcess = Process.Start(new ProcessStartInfo()
+            {
+                FileName = Path.Combine(ftpFolder, "ftpdmin.exe"),
+                Arguments = $"-ha 127.0.0.1 \"{ftpUploadsFolder}\"",
+                WorkingDirectory = ftpFolder
+            });
+            #endregion
+
+            var ftpClient = new FtpClient("localhost");
+
+            await ftpClient.Upload(new MemoryStream(Encoding.UTF8.GetBytes("sample content")), "test_file.txt");
+
+            var stream = await ftpClient.Download("test_file.txt");
+            string fileContent = null;
+            using (var sr = new StreamReader(stream, Encoding.UTF8, false))
+            {
+                fileContent = await sr.ReadToEndAsync();
+            }
+
+            Assert.AreEqual("sample content", fileContent);
+        }
+
     }
 }

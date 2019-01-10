@@ -13,8 +13,10 @@ namespace WrapFTP
         public string Username { get; }
         private string Password { get; }
         public int Timeout { get; }
+        public bool PassiveMode { get; }
+        public bool EnableSsl { get; }
 
-        public FtpClient(string host, int port = 21, string username = null, string password = null, int timeout = -1)
+        public FtpClient(string host, int port = 21, string username = null, string password = null, int timeout = -1, bool passiveMode = true, bool enableSsl = false)
         {
             Validate.NotNullOrEmptyOrWhiteSpace(host, nameof(host));
             Validate.Positive(port, nameof(port));
@@ -24,6 +26,8 @@ namespace WrapFTP
             Username = username;
             Password = password;
             Timeout = timeout;
+            PassiveMode = passiveMode;
+            EnableSsl = enableSsl;
         }
 
         private FtpWebRequest GetFtpWebRequest(string remotePath)
@@ -34,6 +38,9 @@ namespace WrapFTP
             request.ReadWriteTimeout = Timeout;
             request.KeepAlive = false;
             request.ServicePoint.ConnectionLimit = 1000;
+            request.UsePassive = PassiveMode;
+            request.EnableSsl = EnableSsl;
+
             return request;
         }
 
@@ -105,11 +112,38 @@ namespace WrapFTP
 
             var request = GetFtpWebRequest(remoteFileName);
 
+            request.Method = WebRequestMethods.Ftp.DownloadFile;
+
             using (var response = ((FtpWebResponse)await request.GetResponseAsync()))
             {
                 using (var responseStream = response.GetResponseStream())
                 using (var fs = new FileStream(localFileName, FileMode.Create))
                     await responseStream.CopyToAsync(fs);
+            }
+        }
+
+        public async Task<Stream> Download(string remoteFileName)
+        {
+            Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));
+
+            if (Path.IsPathRooted(remoteFileName))
+                throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
+
+            var request = GetFtpWebRequest(remoteFileName);
+
+            request.Method = WebRequestMethods.Ftp.DownloadFile;
+
+            using (var response = ((FtpWebResponse)await request.GetResponseAsync()))
+            {
+                using (var responseStream = response.GetResponseStream())
+                {
+                    var ms = new MemoryStream();
+                    await responseStream.CopyToAsync(ms);
+
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    return ms;
+                }
             }
         }
 
