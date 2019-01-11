@@ -252,6 +252,14 @@ namespace WrapFTP.Tests
             }
 
             Assert.AreEqual("sample content", fileContent);
+
+            #region Shutdown test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+            #endregion
         }
 
     }
