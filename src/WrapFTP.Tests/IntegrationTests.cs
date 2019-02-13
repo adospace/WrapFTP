@@ -262,5 +262,79 @@ namespace WrapFTP.Tests
             #endregion
         }
 
+
+        [TestMethod]
+        public async Task ListFiles()
+        {
+            var ftpFolder = Path.Combine(Path.GetTempPath(), "WrapFTP_test");
+            var ftpUploadsFolder = Path.Combine(ftpFolder, "uploads");
+
+            #region Setup of test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+
+
+            Directory.CreateDirectory(ftpFolder);
+            if (Directory.Exists(ftpUploadsFolder))
+                Directory.Delete(ftpUploadsFolder, true);
+            Directory.CreateDirectory(ftpUploadsFolder);
+
+            using (var fs = new FileStream(Path.Combine(ftpFolder, "ftpdmin.exe"), FileMode.Create))
+                await Assembly.GetExecutingAssembly().GetManifestResourceStream("WrapFTP.Tests.TestServer.ftpdmin.exe")
+                    .CopyToAsync(fs);
+
+
+            var ftpServerProcess = Process.Start(new ProcessStartInfo()
+            {
+                FileName = Path.Combine(ftpFolder, "ftpdmin.exe"),
+                Arguments = $"-ha 127.0.0.1 \"{ftpUploadsFolder}\"",
+                WorkingDirectory = ftpFolder
+            });
+            #endregion
+
+            var myDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir");
+            var mySubDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir", "mysubdir");
+
+            Directory.CreateDirectory(myDirRemoteFolder);
+            Directory.CreateDirectory(mySubDirRemoteFolder);
+
+            var ftpClient = new FtpClient("localhost");
+            var remotePathToFile = Path.Combine("mydir", "mysubdir", "test_file.txt");
+            await ftpClient.Upload(new MemoryStream(Encoding.UTF8.GetBytes("sample content")), remotePathToFile);
+
+            var files = await ftpClient.ListDirectory();
+
+            Assert.AreEqual(1, files.Length);//->mydir
+            Assert.AreEqual("mydir", files[0]);
+
+            files = await ftpClient.ListDirectory("mydir");
+            Assert.AreEqual(1, files.Length);//->mysubdir
+            Assert.AreEqual("mysubdir", files[0]);
+
+            files = await ftpClient.ListDirectory(Path.Combine("mydir", "mysubdir"));
+            Assert.AreEqual(1, files.Length);//->test_file.txt
+            Assert.AreEqual("test_file.txt", files[0]);
+
+            var stream = await ftpClient.Download(remotePathToFile);
+            string fileContent = null;
+            using (var sr = new StreamReader(stream, Encoding.UTF8, false))
+            {
+                fileContent = await sr.ReadToEndAsync();
+            }
+
+            Assert.AreEqual("sample content", fileContent);
+
+            #region Shutdown test ftp server
+            foreach (var process in Process.GetProcessesByName("ftpdmin"))
+            {
+                process.Kill();
+                System.Threading.Thread.Sleep(1000);
+            }
+            #endregion
+        }
+
     }
 }
