@@ -295,14 +295,18 @@ namespace WrapFTP.Tests
             });
             #endregion
 
-            var myDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir");
-            var mySubDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir", "mysubdir");
+            //var myDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir");
+            //var mySubDirRemoteFolder = Path.Combine(ftpUploadsFolder, "mydir", "mysubdir");
 
-            Directory.CreateDirectory(myDirRemoteFolder);
-            Directory.CreateDirectory(mySubDirRemoteFolder);
+            //Directory.CreateDirectory(myDirRemoteFolder);
+            //Directory.CreateDirectory(mySubDirRemoteFolder);
 
             var ftpClient = new FtpClient("localhost");
-            var remotePathToFile = Path.Combine("mydir", "mysubdir", "test_file.txt");
+
+            await ftpClient.MakeDirectory("mydir/");
+            await ftpClient.MakeDirectory("mydir/mysubdir/");
+
+            var remotePathToFile = "mydir/mysubdir/test_file.txt";
             await ftpClient.Upload(new MemoryStream(Encoding.UTF8.GetBytes("sample content")), remotePathToFile);
 
             var files = await ftpClient.ListDirectory();
@@ -310,11 +314,11 @@ namespace WrapFTP.Tests
             Assert.AreEqual(1, files.Length);//->mydir
             Assert.AreEqual("mydir", files[0]);
 
-            files = await ftpClient.ListDirectory("mydir");
+            files = await ftpClient.ListDirectory("mydir/");
             Assert.AreEqual(1, files.Length);//->mysubdir
             Assert.AreEqual("mysubdir", files[0]);
 
-            files = await ftpClient.ListDirectory(Path.Combine("mydir", "mysubdir"));
+            files = await ftpClient.ListDirectory("mydir/mysubdir/");
             Assert.AreEqual(1, files.Length);//->test_file.txt
             Assert.AreEqual("test_file.txt", files[0]);
 
@@ -326,6 +330,19 @@ namespace WrapFTP.Tests
             }
 
             Assert.AreEqual("sample content", fileContent);
+
+            await ftpClient.Delete(remotePathToFile);
+            files = await ftpClient.ListDirectory("mydir/mysubdir/");
+            Assert.AreEqual(0, files.Length);//->test_file.txt
+
+            await ftpClient.RemoveDirectory("mydir/mysubdir");
+            files = await ftpClient.ListDirectory("mydir/");
+            Assert.AreEqual(0, files.Length);//->mysubdir
+
+            await ftpClient.RemoveDirectory("mydir");
+            files = await ftpClient.ListDirectory();
+            Assert.AreEqual(0, files.Length);//->mydir
+
 
             #region Shutdown test ftp server
             foreach (var process in Process.GetProcessesByName("ftpdmin"))
