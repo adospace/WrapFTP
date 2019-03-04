@@ -149,12 +149,12 @@ namespace WrapFTP
 
         public async Task<string[]> ListDirectory(string remoteDirectory = null)
         {
-            if (remoteDirectory != null)
-            {
-                remoteDirectory = remoteDirectory.Replace('\\', '/');
-                if (!remoteDirectory.EndsWith("/"))
-                    remoteDirectory += "/";
-            }
+            //if (remoteDirectory != null)
+            //{
+            //    remoteDirectory = remoteDirectory.Replace('\\', '/');
+            //    if (!remoteDirectory.EndsWith("/"))
+            //        remoteDirectory += "/";
+            //}
 
             var request = GetFtpWebRequest(remoteDirectory);
 
@@ -173,12 +173,12 @@ namespace WrapFTP
 
         public async Task<string[]> ListDirectoryDetails(string remoteDirectory = null)
         {
-            if (remoteDirectory != null)
-            {
-                remoteDirectory = remoteDirectory.Replace('\\', '/');
-                if (!remoteDirectory.EndsWith("/"))
-                    remoteDirectory += "/";
-            }
+            //if (remoteDirectory != null)
+            //{
+            //    remoteDirectory = remoteDirectory.Replace('\\', '/');
+            //    if (!remoteDirectory.EndsWith("/"))
+            //        remoteDirectory += "/";
+            //}
 
             var request = GetFtpWebRequest(remoteDirectory);
 
