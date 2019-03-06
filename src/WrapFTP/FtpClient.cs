@@ -107,8 +107,8 @@ namespace WrapFTP
             Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));
             Validate.NotNullOrEmptyOrWhiteSpace(localFileName, nameof(localFileName));
 
-            if (Path.IsPathRooted(remoteFileName))
-                throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
+            //if (Path.IsPathRooted(remoteFileName))
+            //    throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
 
             var request = GetFtpWebRequest(remoteFileName);
 
@@ -126,8 +126,8 @@ namespace WrapFTP
         {
             Validate.NotNullOrEmptyOrWhiteSpace(remoteFileName, nameof(remoteFileName));
 
-            if (Path.IsPathRooted(remoteFileName))
-                throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
+            //if (Path.IsPathRooted(remoteFileName))
+            //    throw new ArgumentException("Must be a relative file path", nameof(remoteFileName));
 
             var request = GetFtpWebRequest(remoteFileName);
 
